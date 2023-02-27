@@ -1,72 +1,70 @@
 import tkinter as tk
 from tkinter import *
+from tkinter import ttk
 from tkinter import filedialog
 from tkinter.messagebox import showinfo
-import subprocess
+from firebirdsql import services
 import zipfile
+import os
+
 
 # Base root para criação da janela principal
 
-root = tk.Tk()
-root.iconbitmap("paper.ico")
-root.title("Backup Ecodados")
-root.resizable(False, False)
+class App(tk.Tk):
+    def __init__(self):
+        super().__init__()
 
-# Functions
+        self.geometry("400x400")
+        self.iconbitmap("paper.ico")
+        self.title("Backup Ecodados")
+        self.resizable(False, False)
 
+# Geometry Grid
 
-def openFileEco():
-    # Abrir uma caixa de diálogo para selecionar o dir
-    root.filename = filedialog.askopenfilename(initialdir='C:/ecosis/dados', title='Selecione um arquivo', filetypes=(
-        ('Base de dados', '*.eco'), ('All files', '*.*')))
-    # my_label definirá o diretório a ser exibido na tela
-    my_label = Label(root, text=(
-        f'Base de dados: {root.filename}')).pack()
-    remSubstr = root.filename
-    addSubstr = remSubstr[:-3]
-    gbkext = 'GBK'
-    root.result = addSubstr + gbkext
-
-
-def zipFile():
-    inzip = zipfile.ZipFile('{root.filename}.7z', 'w')
-    inzip.write(root.filename)
-    inzip.close()
-
-
-def openFileFB():
-    global getDirectory
-    root.foldername = filedialog.askdirectory(
-        initialdir='C:', title='Selecione um arquivo')
-    binlabel = Label(root, text=(
-        f'Bin firebird: {root.foldername}')).pack()
-    getDirectory = root.foldername
-
-
-def findPort():
-    sendPort = entinput.get()
-    Label(root, text=(f'Porta {sendPort} enviada')).pack()
-
-
-def Gbk():
-    return_code = subprocess.call(
-        f'cd {openFileFB()} gbak -g -b -l -v {root.filename} {getDirectory} -user sysdba -pass masterkey', shell=True)
+        self.columnconfigure(0, weight=1)
+        self.columnconfigure(1, weight=3)
 
     # Buttons Main Window
 
+    def create_widgets(self):
+        self.base_eco = Button(app, text="Informar base de dados",
+                               command=open_eco, height=0, width=18).pack()
+        self.wind_fb = Button(app, text="FB Bin", command=fb,
+                              height=0, width=18).pack()
+        self.enter_input = Entry(app, width=8, justify='center')
+        self.test = Button(app, text="Backup", command=backup_eco,
+                           height=0, width=18).pack()
 
-baseEco = Button(root, text="Informar base de dados",
-                 command=openFileEco, height=0, width=18).pack()
-windFB = Button(root, text="FB Bin", command=openFileFB,
-                height=0, width=18).pack()
-enterPort = Label(root, text="Informe a porta").pack()
-digitPort = tk.Canvas(root, width=400, height=150, relief='raised')
-digitPort.pack()
-entinput = tk.Entry(root, width=8, justify='center')
-confirmarPorta = Button(root, height=0, width=18,
-                        text="Enviar Porta", command=findPort).pack()
-digitPort.create_window(200, 10, window=entinput)
-inzip = Button(root, text="Backup", command=Gbk,
-               height=0, width=18).pack()
 
-root.mainloop()
+def fb():  # SELECIONAR DIRETÓRIO DO FIREBIRD (AVALIAR SE SERÁ REMOVIDO)
+    global getdirectory
+    app.foldername = filedialog.askdirectory(
+        initialdir='C:', title='Firebird BIN')
+    binlabel = Label(app, text=(f'Bin Firebird: {app.foldername}')).pack()
+    getdirectory = app.foldername
+
+
+def open_eco():  # SELECIONAR O BANCO DE DADOS
+    global filename, result
+    # Abrir uma caixa de diálogo para selecionar o dir
+    filename = filedialog.askopenfilename(initialdir='C:/ecosis/dados', title='Selecione um arquivo', filetypes=(
+        ('Base de dados', '*.eco'), ('All files', '*.*')))
+    # my_label definirá o diretório a ser exibido na tela
+    if len(filename) > 0:
+        my_label = Label(app, text=(
+            f'Base de dados: {filename}')).pack()
+        remsubstr = filename[:-3]
+        result = remsubstr + 'GBK'
+        print(filename)
+        print(result)
+
+
+def backup_eco():  # REALIZAR GBAK NO BANCO DE DADOS
+    con = services.connect(user='sysdba', password='masterkey')
+    restorelog = con.backup_database(f'{filename}', f'{result}')
+
+
+if __name__ == "__main__":
+    app = App()
+    app.create_widgets()
+    app.mainloop()
