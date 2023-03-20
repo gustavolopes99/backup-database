@@ -1,9 +1,10 @@
-from tkinter import filedialog
+from tkinter import filedialog, Label
+from zipfile import ZipFile
 import destino_bkp
 import fdb
 import os
 import shutil
-import zip
+from datetime import datetime
 
 class Findeco():
     def open_eco(self):
@@ -16,11 +17,13 @@ class Findeco():
             filename = os.path.basename(dirfilename) #Get the filename without directory
             remsubstr = filename[:-3]
             result = remsubstr + 'GBK'
-            print(filename)
-            print(result)
+            print(f'Database: {filename}')
+            print(f'Gbak target: {result}')
 
 class Backupeco():
     def backup_eco(self):
+        now = datetime.now()
+        date_time = now.strftime("%d%m%y%H%M")
         path = "C:/TemporaryBackup/"
         isExist = os.path.exists(path)
         if not isExist:
@@ -28,8 +31,7 @@ class Backupeco():
             print("Creating directory..")
         filecopy = shutil.copy(dirfilename, path)
         getEco = path + filename #Temporary folder directory with file added .eco
-        getGbk = path + result
-        print(getEco)
+        getGbk = path + result #Temporary folder directory with file added .gbk
         svc = fdb.services.connect(password='masterkey')
         print ("Fetch materialized")
         print ("==================")
@@ -41,8 +43,27 @@ class Backupeco():
         print ("All lines of backup:")
         for i in report:
             print(i)
-        shutil.move(getGbk, destino_bkp.destinopath)
-
+        print('Backup done...')
+        svc.close()
+        print('Removing database..'), os.remove(getEco)
+        os.rename(getGbk, path + date_time + '_' + result)
+        print(path + date_time + result)
+        getPath = path + date_time + '_' + result
+        print(f'Renamed to filedate')        
+        print('Calling zip..')
+        removeGbk = getPath[:-3] #Removing .gbk on string
+        getzipFile = removeGbk + 'zip' #Adding .zip extension
+        zip = ZipFile(getzipFile, "w")
+        zip.write(getPath)
+        print('Compressed file: ')
+        print(getzipFile)
+        print('Closing zip..')
+        zip.close()
+        print('Moving the .zip file on destination folder')
+        shutil.move(getzipFile, destino_bkp.destinopath)
+        print('Removing .Gbk file')
+        os.remove(getPath)
+        print('Done!')
 
             
 
