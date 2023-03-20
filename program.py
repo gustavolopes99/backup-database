@@ -6,7 +6,7 @@ from tkinter import *
 class App(tk.Tk):
     def __init__(self):
         super().__init__()
-        self.geometry("400x100")
+        self.geometry("800x500")
         self.iconbitmap("paper.ico")
         self.title("Backup Ecodados")
         self.resizable(False, False)
@@ -18,7 +18,7 @@ class App(tk.Tk):
         self.base_eco =     Button(program, text="Informar base de dados", command=lambda: search_eco.open_eco(),  height=0, width=18).pack()
         self.destino =      Button(program, text="Destino",                command=lambda: destbkp.destino_bkp(),  height=0, width=18).pack()
         self.backupbutton = Button(program, text="Backup",                 command=lambda: backup.backup_eco(),    height=0, width=18).pack()
-        
+
 if __name__ == "__main__":
     program = App()
     widgets = program.create_widgets()

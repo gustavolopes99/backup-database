@@ -3,6 +3,7 @@ from zipfile import ZipFile
 import destino_bkp
 import fdb
 import os
+import program
 import shutil
 from datetime import datetime
 
@@ -19,6 +20,7 @@ class Findeco():
             result = remsubstr + 'GBK'
             print(f'Database: {filename}')
             print(f'Gbak target: {result}')
+            filenamelabel = program.Label(text=f'Base de dados: {dirfilename}').pack()
 
 class Backupeco():
     def backup_eco(self):
