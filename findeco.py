@@ -1,4 +1,4 @@
-from tkinter import filedialog, Label
+from tkinter import filedialog
 from zipfile import ZipFile
 import destino_bkp
 import fdb
