@@ -6,6 +6,7 @@ import fdb
 import os
 import shutil
 from datetime import datetime
+from tkinter.scrolledtext import ScrolledText
 
 
 class App(ttk.Frame):
@@ -18,9 +19,23 @@ class App(ttk.Frame):
             self.rowconfigure(index=index, weight=1)
 
         # Create a Frame for input widgets
-        self.widgets_frame = ttk.Frame(self, padding=(0, 0, 0, 10))
-        self.widgets_frame.grid(row=0, column=1, padx=10, pady=(30, 10), sticky="nsew", rowspan=3)
-        self.widgets_frame.columnconfigure(index=0, weight=1)
+        self.main_screen = ttk.Frame(self, padding=(0, 0, 0, 10))
+        self.main_screen.grid(row=0, column=1, padx=10, pady=(30, 10), sticky="nsew", rowspan=3)
+        self.main_screen.columnconfigure(index=0, weight=1)
+                          
+        self.buttons_panel = ttk.PanedWindow(self)
+        self.buttons_panel.grid(row=0, column=2, pady=(25, 5), sticky="nsew", rowspan=3)
+
+        self.main_panel = ttk.Frame(self.buttons_panel, padding=5)
+        self.buttons_panel.add(self.main_panel, weight=1)
+
+        var_database_label = tk.StringVar()
+        database_label = tk.Label(self.main_panel, textvariable=var_database_label)
+        database_label.pack(expand=True, fill="both", side='bottom')
+
+        var_dir_label = tk.StringVar()
+        dir_label = tk.Label(self.main_panel, textvariable=var_dir_label)
+        dir_label.pack(expand=True, fill="both", side='bottom')
 
         def open_eco():
             global dirfilename, filename, result, ecofile           
@@ -35,7 +50,7 @@ class App(ttk.Frame):
                 print(f'Database: {filename}')
                 print(f'Gbak target: {result}')
                 ecofile = True
-                validate_dir()
+                var_database_label.set(f'Banco de dados: {filename}')
 
         def backup_eco():
             now = datetime.now()
@@ -82,105 +97,83 @@ class App(ttk.Frame):
             print('Done!')
 
         def validate_dir():
-            if ecofile == True and destino == True:
-                self.togglebutton['state'] = tk.NORMAL
-
+            if ecofile == True and destination == True:
+                self.btn_bkp['state'] = tk.NORMAL
 
         def destino_bkp():
-            global destinopath, destino
+            global destinopath, destination
             destinopath = filedialog.askdirectory(initialdir='C:', title='Destino Backup')
             print(destinopath)
-            destino = True
-            validate_dir()
-                
+            destination = True
+            if len(destinopath) > 0:
+                var_dir_label.set(f'Destino: {destinopath}')
+                validate_dir()                
 
+        segunda = tk.BooleanVar()
+        terca = tk.BooleanVar()
+        quarta = tk.BooleanVar()
+        quinta = tk.BooleanVar()
+        sexta = tk.BooleanVar()
+        sabado = tk.BooleanVar()
+        domingo = tk.BooleanVar()
+        
         def appointment():
-            auto_bkp = tk.Tk()
-            auto_bkp.title("Agendamento de backup")
-            auto_bkp.tk.call("source", "azure.tcl")
-            auto_bkp.tk.call("set_theme", "light")
-
             auto_bkp.update()
             auto_bkp.minsize(auto_bkp.winfo_width(), root.winfo_height())
             x_cordinate = int((auto_bkp.winfo_screenwidth() / 2) - (auto_bkp.winfo_width() / 2))
             y_cordinate = int((auto_bkp.winfo_screenheight() / 2) - (auto_bkp.winfo_height() / 2))
             auto_bkp.geometry("+{}+{}".format(x_cordinate, y_cordinate-20))
+        
+            auto_bkp = tk.Tk()
+            auto_bkp.title("Agendamento de backup")
+            auto_bkp.tk.call("source", "azure.tcl")
+            auto_bkp.tk.call("set_theme", "light")
 
-            segunda = tk.BooleanVar()
-            terca = tk.BooleanVar()
-            quarta = tk.BooleanVar()
-            quinta = tk.BooleanVar()
-            sexta = tk.BooleanVar()
-            sabado = tk.BooleanVar()
-            domingo = tk.BooleanVar()
+            monday = ttk.Checkbutton(auto_bkp, text="Segunda-feira", variable=segunda)
+            monday.grid(row=0, column=0, padx=5, pady=10, sticky="nsew")
 
-            check_1 = ttk.Checkbutton(auto_bkp, text="Segunda-feira", variable=segunda)
-            check_1.grid(row=0, column=0, padx=5, pady=10, sticky="nsew")
+            tuesday = ttk.Checkbutton(auto_bkp, text="Terça-Feira", variable=terca)
+            tuesday.grid(row=1, column=0, padx=5, pady=10, sticky="nsew")
 
-            check_2 = ttk.Checkbutton(auto_bkp, text="Terça-Feira", variable=terca)
-            check_2.grid(row=1, column=0, padx=5, pady=10, sticky="nsew")
+            wednesday = ttk.Checkbutton(auto_bkp, text="Quarta-Feira", variable=quarta)
+            wednesday.grid(row=2, column=0, padx=5, pady=10, sticky="nsew")
 
-            check_3 = ttk.Checkbutton(auto_bkp, text="Quarta-Feira", variable=quarta)
-            check_3.grid(row=2, column=0, padx=5, pady=10, sticky="nsew")
+            thursday = ttk.Checkbutton(auto_bkp, text="Quinta-feira", variable=quinta)
+            thursday.grid(row=3, column=0, padx=5, pady=10, sticky="nsew")
 
-            check_4 = ttk.Checkbutton(auto_bkp, text="Quinta-feira", variable=quinta)
-            check_4.grid(row=3, column=0, padx=5, pady=10, sticky="nsew")
+            friday = ttk.Checkbutton(auto_bkp, text="Sexta-feira", variable=sexta)
+            friday.grid(row=4, column=0, padx=5, pady=10, sticky="nsew")
 
-            check_4 = ttk.Checkbutton(auto_bkp, text="Sexta-feira", variable=sexta)
-            check_4.grid(row=4, column=0, padx=5, pady=10, sticky="nsew")
+            saturday = ttk.Checkbutton(auto_bkp, text="Sábado", variable=sabado)
+            saturday.grid(row=5, column=0, padx=5, pady=10, sticky="nsew")
 
-            check_4 = ttk.Checkbutton(auto_bkp, text="Sábado", variable=sabado)
-            check_4.grid(row=5, column=0, padx=5, pady=10, sticky="nsew")
-
-            check_4 = ttk.Checkbutton(auto_bkp, text="Domingo", variable=domingo)
-            check_4.grid(row=6, column=0, padx=5, pady=10, sticky="nsew")
-
-        # Button
-        self.button = ttk.Button(self.widgets_frame, text="Agendar", style="Toggle.TButton", command=appointment)
-        self.button.grid(row=5, column=0, padx=5, pady=10, sticky="nsew")
-
-        self.button = ttk.Button(self.widgets_frame, text="Base de dados", style="Toggle.TButton", command=open_eco)
-        self.button.grid(row=6, column=0, padx=5, pady=10, sticky="nsew")
-
-        # Accentbutton
-        self.accentbutton = ttk.Button(self.widgets_frame, text="Destino", style="Toggle.TButton", command=destino_bkp)
-        self.accentbutton.grid(row=7, column=0, padx=5, pady=10, sticky="nsew")
-
-        # Togglebutton
-        self.togglebutton = ttk.Button(self.widgets_frame, text="Backup", style="Accent.TButton", command=backup_eco, state='disable')
-        self.togglebutton.grid(row=8, column=0, padx=5, pady=10, sticky="nsew")            
+            sunday = ttk.Checkbutton(auto_bkp, text="Domingo", variable=domingo)
+            sunday.grid(row=6, column=0, padx=5, pady=10, sticky="nsew")
         
 
-        # Panedwindow
-        self.paned = ttk.PanedWindow(self)
-        self.paned.grid(row=0, column=2, pady=(25, 5), sticky="nsew", rowspan=3)
+        self.console_frame = ttk.Labelframe(self.main_panel, text="Console")
+        self.console_frame.pack(expand=True, fill="both")
 
-        # Pane #1
-        self.pane_1 = ttk.Frame(self.paned, padding=5)
-        self.paned.add(self.pane_1, weight=1)
+        self.console_frame = ttk.Frame(root)
+        self.console_frame.pack()
 
-        # Scrollbar
-        self.scrollbar = ttk.Scrollbar(self.pane_1)
-        self.scrollbar.pack(side="right", fill="y")
+        self.scrolled_log = ScrolledText(self.main_panel, height=10, width=60)
+        self.scrolled_log.configure(state='disabled')        
+        self.scrolled_log.pack()
+        
+      
+        self.btn_agendar = ttk.Button(self.main_screen, text="Agendar", style="Toggle.TButton", command=appointment)
+        self.btn_agendar.grid(row=5, column=0, padx=5, pady=10, sticky="nsew")
 
-        # Treeview
-        self.treeview = ttk.Treeview(self.pane_1, selectmode="browse", yscrollcommand=self.scrollbar.set, columns=(1, 2), height=10)
-        self.treeview.pack(expand=True, fill="both")
-        self.scrollbar.config(command=self.treeview.yview)
+        self.btn_db = ttk.Button(self.main_screen, text="Base de dados", style="Toggle.TButton", command=open_eco)
+        self.btn_db.grid(row=6, column=0, padx=5, pady=10, sticky="nsew")
 
-        self.pane_2 = ttk.Frame(self.paned, padding=5)
-        self.paned.add(self.pane_2, weight=3)
+        self.btn_destino = ttk.Button(self.main_screen, text="Destino", style="Toggle.TButton", command=destino_bkp)
+        self.btn_destino.grid(row=7, column=0, padx=5, pady=10, sticky="nsew")
 
-        # Notebook, pane #2
-        self.notebook = ttk.Notebook(self.pane_2)
-        self.notebook.pack(fill="both", expand=True)
+        self.btn_bkp = ttk.Button(self.main_screen, text="Backup", style="Accent.TButton", command=backup_eco, state='disable')
+        self.btn_bkp.grid(row=8, column=0, padx=5, pady=10, sticky="nsew")            
 
-        # Tab #1
-        self.tab_1 = ttk.Frame(self.notebook)
-        for index in [0, 1]:
-            self.tab_1.columnconfigure(index=index, weight=1)
-            self.tab_1.rowconfigure(index=index, weight=1)
-        self.notebook.add(self.tab_1, text="Informações")
 
 if __name__ == "__main__":
     root = tk.Tk()
