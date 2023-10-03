@@ -1,58 +1,83 @@
+'''
 from time import strftime, time
 import subprocess
 import os
 from tkinter import *
+from tkinter import messagebox
 from tkinter import filedialog
+from tkinter import ttk
 import schedule
 from bkp_connectionstring import connectionstring
 
 
-class Postgres:
+class BackupGUI:
     def __init__(self):
         self.root = Tk()
-        self.pg_version = [
-            "PostgreSQL 9.5",
-            "PostgreSQL 9.6",
-            "PostgreSQL 10",
-            "PostgreSQL 11",
-            "PostgreSQL 12",
-            "PostgreSQL 13",
-            "PostgreSQL 14",
-            "PostgreSQL 15",
-        ]
-        self.version = StringVar()  # Armazena a variavel setada no array
         self.MainWin()
         self.root.title("Backup PostgreSQL")
-        self.root.geometry("300x320")
-        self.root.resizable("false", "false")
+        self.root.geometry("271x130")
+        # self.root.resizable("false", "false")
         self.getcon = connectionstring()  # cria objeto da classe connectionstring
+        self.getcon.createdatabase()
         self.root.mainloop()
 
     def MainWin(self):
+        self.hour = ttk.Spinbox(
+            self.root, from_=0, to=23, wrap=True, width=2, state="readonly"
+        )
+        self.hour.place(relx=0.3, rely=0.5, anchor=E)
         self.lbl_manual = Button(
-            self.root, text="Backup Manual", command=self.manualbkp
+            self.root, text="Backup Manual", command=self.manualbkp, width=13
         )
-        self.lbl_manual.pack()
+        self.lbl_manual.place(relx=0.5, rely=0.3, anchor=CENTER)
         self.lbl_auto = Button(
-            self.root, text="Configurar Backup Automático", command=self.scheduler_win
+            self.root, text="Configurar", command=self.scheduler_win, width=13
         )
-        self.lbl_auto.pack()
-        findfb = Button(self.root, text="Diretório Firebird", command=self.GetFBDir)
-        findfb.pack()
-        findpg = Button(self.root, text="Diretório Postgres", command=self.GetPGDir)
-        findpg.pack()
+        self.lbl_auto.place(relx=0.5, rely=0.5, anchor=CENTER)
+        findfb = Button(
+            self.root, text="Diretório Firebird", command=self.GetFBDir, width=13
+        )
+        # findfb.grid(row=2, column=5, pady=5, padx=5)
+        btn = Button(self.root, command=self.getDataFields, text="getdata", width=13)
+        btn.place(relx=0.5, rely=0.7, anchor=CENTER)
 
     def GetFBDir(self):
-        self.fb_dir = filedialog.askdirectory(initialdir="C:", title="Firebird BIN")
-        if len(self.fb_dir) > 3:
-            print(self.fb_dir)
+        fb_dir = filedialog.askdirectory(initialdir="C:", title="Firebird BIN")
+        if len(fb_dir) > 3:
+            print(fb_dir)
+            self.GetfirebirdDir(fb_dir)
+
+    def DestinationFolder(self):
+        destination = filedialog.askdirectory(initialdir="C:", title="Pasta destino")
+        if len(destination) > 3:
+            print(destination)
+            self.entry_destino.insert(0, destination)
 
     def GetPGDir(self):
         self.pg_dir = filedialog.askdirectory(initialdir="C:", title="Postgres BIN")
-        print(self.pg_dir)
+        if len(self.pg_dir) > 3:
+            print(self.pg_dir)
+
+    def GetfirebirdDir(self, fb):
+        self.getcon.cursor.execute(
+            f"""UPDATE TCONFIG SET DIRETORIOFIREBIRD = '{fb}' WHERE ID = 1"""
+        )
+        self.getcon.connection.commit()
+
+    def GetPostgresDir(self, pg):
+        self.getcon.cursor.execute(
+            f"""UPDATE TCONFIG SET DIRETORIOPOSTGRES = '{pg}' WHERE ID = 1"""
+        )
+        self.getcon.connection.commit()
+
+    def getDataFields(self):
+        self.getcon.Firebird_dir()
+        self.getcon.Postgres_dir()
 
     def scheduler_win(self):
         self.auto_bkp = Toplevel(self.root)
+        self.auto_bkp.config(padx=5, pady=8)
+        self.auto_bkp.title("Configurar")
         self.segunda = BooleanVar()
         self.terca = BooleanVar()
         self.quarta = BooleanVar()
@@ -67,7 +92,7 @@ class Postgres:
             onvalue=True,
             offvalue=False,
         )
-        self.sunday.pack(side=LEFT)
+        self.sunday.grid(column=5, row=1)
         self.monday = Checkbutton(
             self.auto_bkp,
             text="S",
@@ -75,7 +100,7 @@ class Postgres:
             onvalue=True,
             offvalue=False,
         )
-        self.monday.pack(side=LEFT)
+        self.monday.grid(column=6, row=1)
         self.tuesday = Checkbutton(
             self.auto_bkp,
             text="T",
@@ -83,7 +108,7 @@ class Postgres:
             onvalue=True,
             offvalue=False,
         )
-        self.tuesday.pack(side=LEFT)
+        self.tuesday.grid(column=7, row=1)
         self.wednesday = Checkbutton(
             self.auto_bkp,
             text="Q",
@@ -91,7 +116,7 @@ class Postgres:
             onvalue=True,
             offvalue=False,
         )
-        self.wednesday.pack(side=LEFT)
+        self.wednesday.grid(column=8, row=1)
         self.thursday = Checkbutton(
             self.auto_bkp,
             text="Q",
@@ -99,7 +124,7 @@ class Postgres:
             onvalue=True,
             offvalue=False,
         )
-        self.thursday.pack(side=LEFT)
+        self.thursday.grid(column=9, row=1)
         self.friday = Checkbutton(
             self.auto_bkp,
             text="S",
@@ -107,7 +132,7 @@ class Postgres:
             onvalue=True,
             offvalue=False,
         )
-        self.friday.pack(side=LEFT)
+        self.friday.grid(column=10, row=1)
         self.saturday = Checkbutton(
             self.auto_bkp,
             text="S",
@@ -115,38 +140,103 @@ class Postgres:
             onvalue=True,
             offvalue=False,
         )
-        self.saturday.pack(side=LEFT)
+        self.saturday.grid(column=11, row=1)
         self.label_time = Label(self.auto_bkp, text="Hora HH:MM")
-        self.label_time.pack()
-        self.sch_time = Entry(self.auto_bkp)
-        self.sch_time.pack(ipadx=2)
-        label_protocol = Label(self.auto_bkp, text="IP")
-        label_protocol.pack()
-        self.protocol = Entry(self.auto_bkp, justify=CENTER)
-        self.protocol.insert(0, "127.0.0.1")
-        self.protocol.pack()
-        label_port = Label(self.auto_bkp, text="Porta")
-        label_port.pack()
-        self.port_entry = Entry(self.auto_bkp, justify=CENTER)
-        self.port_entry.insert(0, "5432")
-        self.port_entry.pack()
+        self.label_time.grid(column=12, row=0)
+        self.sch_time = Entry(self.auto_bkp, width=6)
+        self.sch_time.grid(column=12, row=1, padx=8, pady=2)
         label_db = Label(self.auto_bkp, text="Banco de dados")
-        label_db.pack()
-        self.db = Entry(self.auto_bkp, justify=CENTER)
+        label_db.grid(row=0, column=0, sticky=W, padx=5)
+        self.db = Entry(self.auto_bkp, width=18)
         self.db.insert(0, "ecodados")
-        self.db.pack()
-        user_label = Label(self.auto_bkp, text="User")
-        user_label.pack()
-        self.user = Entry(self.auto_bkp, justify=CENTER)
+        self.db.grid(row=1, column=0, padx=5)
+        user_label = Label(self.auto_bkp, text="Usuário")
+        user_label.grid(row=0, column=1, sticky=W)
+        self.user = Entry(self.auto_bkp, width=12)
         self.user.insert(0, "postgres")
-        self.user.pack()
-        password_label = Label(self.auto_bkp, text="Password")
-        password_label.pack()
-        self.password = Entry(self.auto_bkp, show="*", justify=CENTER)
+        self.user.grid(row=1, column=1, padx=2)
+        password_label = Label(self.auto_bkp, text="Senha")
+        password_label.grid(row=0, column=2, sticky=W)
+        self.password = Entry(self.auto_bkp, show="*", width=12)
         self.password.insert(0, "postgres")
-        self.password.pack()
-        self.save = Button(self.auto_bkp, command=self.scheduler, text="Salvar")
-        self.save.pack(after=self.password)
+        self.password.grid(row=1, column=2, padx=5)
+        label_protocol = Label(self.auto_bkp, text="IP")
+        label_protocol.grid(row=0, column=3, padx=5, sticky=W)
+        self.protocol = Entry(self.auto_bkp, width=12)
+        self.protocol.insert(0, "127.0.0.1")
+        self.protocol.grid(row=1, column=3, padx=5, sticky=W)
+        label_port = Label(self.auto_bkp, text="Porta")
+        label_port.grid(row=0, column=4, sticky=W)
+        self.port_entry = Entry(self.auto_bkp, width=8)
+        self.port_entry.insert(0, "5432")
+        self.port_entry.grid(row=1, column=4, padx=5, sticky=W)
+        lbl_identify = Label(self.auto_bkp, text="Identificação")
+        lbl_identify.grid(row=2, column=0, padx=5, sticky=W)
+        self.identify = Entry(self.auto_bkp, width=18)
+        self.identify.grid(row=3, column=0, padx=5)
+        self.save = Button(
+            self.auto_bkp, command=self.checkinfo, text="Salvar", width=15, height=5
+        )
+        self.save.grid(row=4, column=12, sticky=SE)
+        lbl_findpg = Label(self.auto_bkp, text="BIN PostgreSQL")
+        lbl_findpg.grid(row=2, column=1, sticky=W)
+        findpg = Button(self.auto_bkp, text="Procurar", command=self.GetPGDir, width=13)
+        findpg.grid(row=3, column=1, pady=5, padx=5)
+        lbl_destino = Label(self.auto_bkp, text="Destino do Backup")
+        lbl_destino.grid(row=2, column=3, sticky=W, columnspan=2)
+        self.entry_destino = Entry(self.auto_bkp, width=29)
+        self.entry_destino.grid(row=3, column=3, columnspan=2)
+        self.btn_destino = Button(
+            self.auto_bkp, command=self.DestinationFolder, text="...", width=6
+        )
+        self.btn_destino.grid(row=3, column=6)
+        columns = ("ID", "Banco", "Destino")
+        tree = ttk.Treeview(self.auto_bkp, columns=columns, show="headings")
+        tree.heading("ID", text="Identificação")
+        tree.heading("Banco", text="Nome do Banco")
+        tree.heading("Destino", text="Destino")
+        tree.grid(row=4, column=0, columnspan=8)
+
+    def checkinfo(self):
+        if self.sch_time.get():
+            if self.protocol.get():
+                if self.port_entry.get():
+                    if self.db.get():
+                        if self.user.get():
+                            if self.password.get():
+                                if self.identify.get():
+                                    if self.entry_destino.get():
+                                        self.saveconfig(
+                                            self.pg_dir,
+                                            self.port_entry.get(),
+                                            self.db.get(),
+                                        )
+
+    def saveconfig(self, pgdir, pgport, banco):
+        self.getcon.cursor.execute(
+            f"""UPDATE TCONFIG
+                                    SET DIRETORIOPOSTGRES='{pgdir}', PORTACONEXAOPG={pgport}"""
+        )
+        self.getcon.cursor.execute(f"""UPDATE TBASES
+                                    SET BANCO='{banco}',
+                                        DOMINGO='{}',
+                                        SEGUNDA='{}',
+                                        TERCA='{}',
+                                        QUARTA='{}',
+                                        QUINTA='{}',
+                                        SEXTA='{}',
+                                        SABADO='{}',
+                                        HORA='{}',
+                                        DESCRICAO='{}',
+                                        MANTERBACKUP='N',
+                                        BANCODEDADOS='{}',
+                                        TIPOBASE='PG',
+                                        USUARIOPG='{}',
+                                        SENHAPG='{}',
+                                        USUARIOFB='sysdba'
+                                        SENHAFB='masterkey'
+                                        where ID = 1  """
+                                     )
 
     def switchstate(self):
         self.getweek = (
@@ -184,44 +274,8 @@ class Postgres:
         for sem in dia_arr:
             print(sem, sep="\n")  # Exibem os dias da semana marcados
 
-    def version_pg(self):
-        self.get_version = self.version.get()  # armazena a variavel da StringVar
-        self.v = "PostgreSQL 9.5"
-        if self.get_version == self.v:
-            self.dump("9.5")
-        elif self.get_version == self.v.replace("9.5", "9.6"):
-            self.dump("9.6")
-        elif self.get_version == self.v.replace("9.5", "10"):
-            self.dump("10")
-        elif self.get_version == self.v.replace("9.5", "11"):
-            self.dump("11")
-        elif self.get_version == self.v.replace("9.5", "12"):
-            self.dump("12")
-        elif self.get_version == self.v.replace("9.5", "13"):
-            self.dump("13")
-        elif self.get_version == self.v.replace("9.5", "14"):
-            self.dump("14")
-        elif self.get_version == self.v.replace("9.5", "15"):
-            self.dump("15")
-
     def manualbkp(self):
         self.manual_bkp = Toplevel(self.root)
-        # versao_pg = Label(self.root, text="Versão")
-        # versao_pg.pack()
-        # combo_version =  (
-        #    self.root, values=self.pg_version, textvariable=self.version
-        # )
-        # combo_version.pack()
-        label_protocol = Label(self.manual_bkp, text="IP")
-        label_protocol.pack()
-        self.protocol = Entry(self.manual_bkp, justify=CENTER)
-        self.protocol.insert(0, "127.0.0.1")
-        self.protocol.pack()
-        label_port = Label(self.manual_bkp, text="Porta")
-        label_port.pack()
-        self.port_entry = Entry(self.manual_bkp, justify=CENTER)
-        self.port_entry.insert(0, "5432")
-        self.port_entry.pack()
         label_db = Label(self.manual_bkp, text="Banco de dados")
         label_db.pack()
         self.db = Entry(self.manual_bkp, justify=CENTER)
@@ -259,8 +313,8 @@ class Postgres:
     def passpg(self):
         self.pass_pg = self.password.get()
 
-    def dump(self, version):
-        self.dumper = f""" "c:\\program files\\postgresql\\{version}\\bin\\pg_dump" -U %s -Z 9 -f %s -F c %s  """
+    def dump(self):
+        self.dumper = f""" "{self.getcon.pgdir}/pg_dump" -U %s -Z 9 -f %s -F c %s  """
         print(self.dumper)
 
     def backup_pg(self):
@@ -281,17 +335,19 @@ class Postgres:
         subprocess.call(command, shell=True)
 
 
-Postgres()
+if __name__ == "__main__":
+    BackupGUI()
 
 # dump using PostgreSQL's custom format, with maximum compression. (-F c, -Z 9)
 
-
+"""
 # dumper = (
-#    """ "c:\\program files\\postgresql\\15\\bin\\pg_dump" -U %s -Z 9 -f %s -F c %s  """
+#  "c:\\program files\\postgresql\\15\\bin\\pg_dump" -U %s -Z 9 -f %s -F c %s
 # )
 # os.putenv("PGPASSWORD", PASS)
 # time = str(strftime("%Y-%m-%d-%H-%M"))
 # file_name = database + "_" + time + ".sql.pgdump"
 # Run the pg_dump command to the right directory
 # command = dumper % (USER, BACKUP_DIR + file_name, database)
-# subprocess.call(command, shell=True)
+# subprocess.call(command, shell=True) """
+'''

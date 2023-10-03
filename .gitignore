@@ -127,5 +127,5 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
-output/Backup.exe
-aa.py
+__pychache__/
+.vscode/
